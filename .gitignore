@@ -1,0 +1,3 @@
+config/credentials.json
+outputs/
+*.ipynb_checkpoints/

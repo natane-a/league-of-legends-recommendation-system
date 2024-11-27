@@ -1,6 +1,8 @@
 import os
 import json
 import requests
+import time
+import datetime
 
 def load_api_key():
     """
@@ -66,8 +68,9 @@ def extract_match_details(match_data, timeline_data):
                             break
 
         # Extract rune data (perks)
-        primary_rune = participant.get("perks", {}).get("styles", [])[0].get("selections", [])[0].get("perk", "Unknown Primary Rune")
-        secondary_rune = participant.get("perks", {}).get("styles", [])[1].get("style", "Unknown Secondary Rune")
+        perks = participant.get("perks", {}).get("styles", [])
+        primary_rune = perks[0] if len(perks) > 0 else {}
+        secondary_rune = perks[1] if len(perks) > 1 else {}
 
         match_summary = {
             "matchId": match_data["metadata"]["matchId"],
@@ -128,39 +131,65 @@ else:
     all_match_details = []
 
 # Process each match ID and extract details
+request_count = 0
+start_time = datetime.datetime.now()
+
 for match_id in match_ids:
-    try:
-        # Fetch match details and timeline
-        match_data = fetch_match_details(API_KEY, match_id, REGION)
-        timeline_data = fetch_match_timeline(API_KEY, match_id, REGION)
+    while True:
+        try:
+            # Check request rate limits
+            current_time = datetime.datetime.now()
+            elapsed_seconds = (current_time - start_time).total_seconds()
 
-        # Extract relevant details
-        extracted_details = extract_match_details(match_data, timeline_data)
+            if request_count >= 50 and elapsed_seconds < 120:
+                sleep_time = 120 - elapsed_seconds
+                print(f"Approaching 2-minute rate limit. Waiting for {sleep_time:.2f} seconds...")
+                time.sleep(sleep_time)
+                request_count = 0
+                start_time = datetime.datetime.now()
 
-        # Append new match details to the existing data
-        all_match_details.extend(extracted_details)
+            # If 10 requests made in the last second, wait for the next second
+            if request_count % 10 == 0 and request_count > 0:
+                print("10 requests made in the last second. Pausing for 1 second to avoid limit...")
+                time.sleep(1)
 
-        # Check if the file exceeds 10,000 entries
-        if len(all_match_details) > 10000:
-            # Save the current file and start a new one
+            # Fetch match details and timeline
+            match_data = fetch_match_details(API_KEY, match_id, REGION)
+            timeline_data = fetch_match_timeline(API_KEY, match_id, REGION)
+
+            # Extract relevant details
+            extracted_details = extract_match_details(match_data, timeline_data)
+
+            # Append new match details to the existing data
+            all_match_details.extend(extracted_details)
+
+            # Check if the file exceeds 10,000 entries
+            if len(all_match_details) > 10000:
+                # Save the current file and start a new one
+                with open(os.path.join(MATCH_DETAILS_OUTPUT_DIR, latest_file), 'w') as f:
+                    json.dump(all_match_details[:10000], f, indent=4)
+                print(f"Saved {latest_file} with 10,000 entries.")
+
+                # Update the list of remaining details
+                all_match_details = all_match_details[10000:]
+
+                # Increment the file name
+                latest_file_number = int(latest_file[-6:-5]) + 1
+                latest_file = f"all_match_details{latest_file_number:02d}.json"
+
+            # Save the current details to the latest file
             with open(os.path.join(MATCH_DETAILS_OUTPUT_DIR, latest_file), 'w') as f:
-                json.dump(all_match_details[:10000], f, indent=4)
-            print(f"Saved {latest_file} with 10,000 entries.")
+                json.dump(all_match_details, f, indent=4)
 
-            # Update the list of remaining details
-            all_match_details = all_match_details[10000:]
+            print(f"Details for match {match_id} processed and saved to JSON.")
+            request_count += 2  # Increment by 2 due to two requests (details and timeline)
+            break
 
-            # Increment the file name
-            latest_file_number = int(latest_file[-6:-5]) + 1
-            latest_file = f"all_match_details{latest_file_number:02d}.json"
-
-        # Save the current details to the latest file
-        with open(os.path.join(MATCH_DETAILS_OUTPUT_DIR, latest_file), 'w') as f:
-            json.dump(all_match_details, f, indent=4)
-
-        print(f"Details for match {match_id} processed and saved to JSON.")
-
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching details for match ID {match_id}: {e}")
+        except requests.exceptions.RequestException as e:
+            print(f"Error: {e}")
+            if "expired" in str(e).lower():
+                API_KEY = input("API key expired. Please enter a new API key: ")
+            else:
+                break
 
 print("All match details have been processed.")

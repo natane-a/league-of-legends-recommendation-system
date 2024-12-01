@@ -1,3 +1,5 @@
 config/credentials.json
 models/
 *.ipynb_checkpoints/
+src/__pycache__
+file_structure.txt

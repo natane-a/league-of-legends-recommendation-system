@@ -1,0 +1,50 @@
+project_root/
+│
+├── data/
+│   ├── raw/                 # Raw data fetched from Riot API (JSON, CSV, etc.)
+│   ├── processed/           # Cleaned and preprocessed datasets (ready for modeling)
+│   └── external/            # Supplementary data (e.g., champion stats, patch notes)
+│
+├── notebooks/
+│   ├── 01_data_collection.ipynb   # Riot API fetching and storage
+│   ├── 02_data_preprocessing.ipynb # Data cleaning and feature engineering
+│   ├── 03_eda.ipynb               # Exploratory Data Analysis (EDA)
+│   ├── 04_modeling.ipynb          # Model development and evaluation
+│   ├── 05_chatbot_integration.ipynb # Chatbot logic and recommendation integration
+│   └── utils.ipynb                # Helper functions for reuse (e.g., API requests)
+│
+├── src/
+│   ├── __init__.py          # Makes the `src` directory a Python module
+│   ├── data_loader.py       # Scripts for loading and preprocessing data
+│   ├── api_handler.py       # Wrapper for Riot API calls and parsing responses
+│   ├── recommendation.py    # Core recommendation logic and algorithms
+│   ├── chatbot.py           # Chatbot integration and conversational logic
+│   └── evaluation.py        # Metrics computation (e.g., Precision@K, Recall@K)
+│
+├── tests/
+│   ├── test_api_handler.py  # Unit tests for API data fetching
+│   ├── test_recommendation.py # Unit tests for recommendation algorithms
+│   ├── test_chatbot.py      # Unit tests for chatbot interactions
+│   └── __init__.py
+│
+├── config/
+│   ├── credentials.json     # API keys and tokens (ensure this is excluded in .gitignore)
+│   ├── params.yaml          # Configuration for models, paths, and constants
+│   └── environment.yml      # Conda environment definition
+│
+├── outputs/
+│   ├── models/              # Saved models (e.g., pickled files or TensorFlow checkpoints)
+│   ├── visualizations/      # Plots, charts, and images generated during EDA or analysis
+│   └── logs/                # Logs for tracking API requests, errors, and experiments
+│
+├── docs/
+│   ├── architecture.md      # Documentation of the system’s architecture
+│   ├── api_reference.md     # Details about the Riot API integration
+│   ├── user_guide.md        # Instructions for using the chatbot and system
+│   └── readme.md            # Project overview and setup instructions
+│
+├── images/                  # Static images for documentation or results
+│
+├── .gitignore               # Ignore sensitive files (e.g., credentials.json)
+├── requirements.txt         # Dependencies for pip-based setup
+└── README.md                # Project overview

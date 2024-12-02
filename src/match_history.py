@@ -31,7 +31,7 @@ def fetch_match_ids(api_key, puuid, region, count=10):
     
     try:
         response = requests.get(url, headers=headers)
-        if response.status_code == 403:  # Forbidden, possible expired API key
+        if response.status_code == 403:  # possible expired API key
             raise Exception("API Key might be expired. Please renew your key.")
         response.raise_for_status()
         match_ids = response.json()
@@ -58,21 +58,21 @@ def load_puuids(puuids_path):
         puuids_data = json.load(f)
         return list(puuids_data.values())[::-1] if isinstance(puuids_data, dict) else puuids_data[::-1]
 
-# Example usage
+# usage
 API_KEY = load_api_key()
 PUUIDS_PATH = "../data/raw/puuids/puuids.json"
 REGION = "americas"
 MATCH_OUTPUT_PATH = "../data/raw/match_ids/match_ids.json"
 
-# Load PUUIDs from file
+# load PUUIDs from file
 puuids = load_puuids(PUUIDS_PATH)
 
-# Fetch match IDs for each PUUID from bottom to top and append to existing JSON
+# fetch match IDs for each PUUID from bottom to top and append to existing JSON
 if puuids:
-    # Ensure the output directory exists
+    # ensure the output directory exists
     os.makedirs(os.path.dirname(MATCH_OUTPUT_PATH), exist_ok=True)
 
-    # Load existing match IDs to handle duplicates
+    # load existing match IDs to handle duplicates
     if os.path.exists(MATCH_OUTPUT_PATH):
         with open(MATCH_OUTPUT_PATH, 'r') as f:
             existing_match_ids = set(json.load(f))
@@ -82,15 +82,15 @@ if puuids:
     request_count = 0
     start_time = datetime.datetime.now()
 
-    # Iterate over PUUIDs from bottom to top
+    # iterate over PUUIDs from bottom to top
     for puuid in puuids:
         while True:
             try:
-                # Check request rate limits
+                # check request rate limits
                 current_time = datetime.datetime.now()
                 elapsed_seconds = (current_time - start_time).total_seconds()
 
-                # If 100 requests made in less than 2 minutes, wait until rate limit resets
+                # if 100 requests made in less than 2 minutes, wait until rate limit resets
                 if request_count >= 100 and elapsed_seconds < 120:
                     sleep_time = 120 - elapsed_seconds
                     print(f"Approaching 2-minute rate limit. Waiting for {sleep_time:.2f} seconds...")
@@ -98,7 +98,7 @@ if puuids:
                     request_count = 0
                     start_time = datetime.datetime.now()
 
-                # If 20 requests made in the last second, wait for the next second
+                # if 20 requests made in the last second, wait for the next second
                 if request_count % 20 == 0 and request_count > 0:
                     print("20 requests made in the last second. Pausing for 1 second to avoid limit...")
                     time.sleep(1)
@@ -106,7 +106,7 @@ if puuids:
                 match_ids = fetch_match_ids(API_KEY, puuid, REGION)
                 existing_match_ids.update(match_ids)
 
-                # Save updated match IDs to JSON file
+                # save updated match IDs to JSON file
                 with open(MATCH_OUTPUT_PATH, 'w') as f:
                     json.dump(list(existing_match_ids), f, indent=4)
 

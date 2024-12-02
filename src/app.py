@@ -6,7 +6,7 @@ import pandas as pd
 df_path = '../data/processed/transformed_data.csv'
 df = pd.read_csv(df_path)
 
-# Load the model and pipeline
+# load the model and pipeline
 model_path = "../models/best_recommendation_model.pkl"
 pipeline_path = "../models/preprocessing_pipeline.pkl"
 
@@ -17,7 +17,7 @@ def load_model():
 best_model = load_model()
 pipeline = joblib.load(pipeline_path)
 
-# Load champion, item, and rune datasets
+# load champion, item, and rune datasets
 with open("../data/raw/champion_data/champions.json", "r") as f:
     champion_data = json.load(f)["data"]
 
@@ -106,7 +106,7 @@ def predict_optimal_build(champion_name, matchup_champion_name, df, pipeline, mo
 
     return predicted_df
 
-# Streamlit UI
+# streamlit UI
 st.title("League of Legends Recommendation System")
 champion_name = st.text_input("Enter your champion name:")
 matchup_champion_name = st.text_input("Enter opponent champion name:")

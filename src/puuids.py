@@ -14,8 +14,7 @@ def load_api_key():
         data = json.load(f)
     return data["riot_api_key"]
 
-# Example Usage
-API_KEY = load_api_key()  # Load API key initially
+API_KEY = load_api_key()  # lod API key initially
 
 async def fetch_puuid(session, url, headers, summoner_id):
     """
@@ -54,7 +53,7 @@ async def fetch_puuids(api_key, summoner_ids_path, region, output_path):
     with open(summoner_ids_path, 'r') as f:
         summoner_data = json.load(f)
 
-    # Combine all summoner IDs from different branches into a single list
+    # combine all summoner IDs from different branches into a single list
     summoner_ids = []
     for rank in summoner_data:
         summoner_ids.extend(summoner_data[rank])
@@ -62,17 +61,17 @@ async def fetch_puuids(api_key, summoner_ids_path, region, output_path):
     headers = {"X-Riot-Token": api_key}
     puuids = []
 
-    # Load existing PUUIDs if the output file exists
+    # load existing PUUIDs if the output file exists
     if os.path.exists(output_path):
         with open(output_path, 'r') as f:
             existing_puuids = json.load(f)
     else:
         existing_puuids = {}
 
-    # Get the list of already processed summoner IDs
+    # get the list of already processed summoner IDs
     processed_summoner_ids = set(existing_puuids.keys())
 
-    # Filter out summoner IDs that have already been processed
+    # filter out summoner IDs that have already been processed
     summoner_ids_to_process = [summoner_id for summoner_id in summoner_ids if summoner_id not in processed_summoner_ids]
 
     request_count = 0
@@ -84,11 +83,11 @@ async def fetch_puuids(api_key, summoner_ids_path, region, output_path):
             elapsed_seconds = (current_time - start_time).total_seconds()
 
             if elapsed_seconds > 120:
-                # Reset the request count after 2 minutes
+                # reset the request count after 2 minutes
                 request_count = 0
                 start_time = current_time
 
-                # Update JSON file with the collected PUUIDs so far
+                # update JSON file with the collected PUUIDs so far
                 os.makedirs(os.path.dirname(output_path), exist_ok=True)
                 with open(output_path, 'w') as f:
                     json.dump(existing_puuids, f, indent=4)
@@ -101,7 +100,7 @@ async def fetch_puuids(api_key, summoner_ids_path, region, output_path):
                 request_count = 0
                 start_time = datetime.datetime.now()
 
-                # Update JSON file with the collected PUUIDs so far
+                # update JSON file with the collected PUUIDs so far
                 os.makedirs(os.path.dirname(output_path), exist_ok=True)
                 with open(output_path, 'w') as f:
                     json.dump(existing_puuids, f, indent=4)
@@ -111,7 +110,7 @@ async def fetch_puuids(api_key, summoner_ids_path, region, output_path):
             puuid = await fetch_puuid(session, url, headers, summoner_id)
             if puuid and puuid not in existing_puuids:
                 existing_puuids[summoner_id] = puuid
-                # Save the updated list immediately after adding a new PUUID
+                # save the updated list immediately after adding a new PUUID
                 os.makedirs(os.path.dirname(output_path), exist_ok=True)
                 with open(output_path, 'w') as f:
                     json.dump(existing_puuids, f, indent=4)
@@ -123,23 +122,23 @@ async def fetch_puuids(api_key, summoner_ids_path, region, output_path):
                 print("20 requests made in the last second. Pausing for 1 second to avoid limit...")
                 await asyncio.sleep(1)
 
-    # Ensure the output directory exists
+    # ensure the output directory exists
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-    # Save updated PUUIDs to JSON file
+    # save updated PUUIDs to JSON file
     with open(output_path, 'w') as f:
         json.dump(existing_puuids, f, indent=4)
 
     print(f"PUUIDs updated and saved to {output_path}")
     return list(existing_puuids.values())
 
-# Example Usage
+# usage
 API_KEY = load_api_key()
 SUMMONER_IDS_PATH = "../data/raw/summoner_id/summoner_id.json"
 REGION = "na1"
 OUTPUT_PATH = "../data/raw/puuids/puuids.json"
 
-# Run the asynchronous function
+# run the asynchronous function
 asyncio.run(fetch_puuids(
     api_key=API_KEY, 
     summoner_ids_path=SUMMONER_IDS_PATH, 

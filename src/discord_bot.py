@@ -107,7 +107,7 @@ def predict_optimal_build(champion_name, matchup_champion_name, df, pipeline, mo
     predicted_decoded_df = pd.DataFrame()
     for col in target_features:
         predicted_decoded_df[col] = label_encoders[col].inverse_transform(predicted_encoded_df[col])
-
+    
     # Ensure unique legendary items
     if predicted_decoded_df['Legendary_1_id'][0] == predicted_decoded_df['Legendary_2_id'][0]:
         current_item = predicted_decoded_df['Legendary_1_id'][0]
@@ -142,18 +142,30 @@ def predict_optimal_build(champion_name, matchup_champion_name, df, pipeline, mo
             secondary_tree = secondary_tree_options[0]
 
     # Replace SecondarySlot1 if it doesn't match the chosen secondary tree
+    secondary_tree_options = [t for t in rune_trees if t != primary_tree]
+
     valid_runes_secondary_1 = df[
-        (df['championId'] == champion_id) & 
+        (df['championId'] == champion_id) &
         (df['matchupChampion'] == matchup_champion_id) &
-        (df['SecondarySlot1'].apply(lambda x: rune_id_to_tree.get(x, None)) == secondary_tree)
+        (df['SecondarySlot1'].apply(lambda x: rune_id_to_tree.get(x, None)).isin(secondary_tree_options))
     ]['SecondarySlot1'].value_counts().index.tolist()
 
     if valid_runes_secondary_1:
         predicted_decoded_df['SecondarySlot1'] = valid_runes_secondary_1[0]
+    else:
+        # Fallback: Select any rune from a tree not equal to the primary tree
+        all_valid_secondary_1_runes = [
+            r for r, t in rune_id_to_tree.items()
+            if t != primary_tree
+        ]
+        if all_valid_secondary_1_runes:
+            predicted_decoded_df['SecondarySlot1'] = all_valid_secondary_1_runes[0]
 
-    # Replace SecondarySlot2 if it is the same as SecondarySlot1 or from the same row
+    # Ensure SecondarySlot2 is from the same tree as SecondarySlot1, but not from the same row
+    secondary_tree = rune_id_to_tree.get(predicted_decoded_df['SecondarySlot1'][0], None)
+
     valid_runes_secondary_2 = df[
-        (df['championId'] == champion_id) & 
+        (df['championId'] == champion_id) &
         (df['matchupChampion'] == matchup_champion_id) &
         (df['SecondarySlot1'] == predicted_decoded_df['SecondarySlot1'][0]) &
         (df['SecondarySlot2'].apply(lambda x: rune_id_to_tree.get(x, None)) == secondary_tree) &
@@ -164,12 +176,13 @@ def predict_optimal_build(champion_name, matchup_champion_name, df, pipeline, mo
         predicted_decoded_df['SecondarySlot2'] = valid_runes_secondary_2[0]
     else:
         # If no valid rune exists, choose from the secondary tree but ensure no row conflicts
-        all_valid_secondary_runes = [
-            r for r, t in rune_id_to_tree.items() 
-            if t == secondary_tree and rune_id_to_row.get(r) != rune_id_to_row.get(predicted_decoded_df['SecondarySlot1'][0], None)
+        all_valid_secondary_2_runes = [
+            r for r, t in rune_id_to_tree.items()
+            if t == secondary_tree and 
+            rune_id_to_row.get(r, None) != rune_id_to_row.get(predicted_decoded_df['SecondarySlot1'][0], None)
         ]
-        if all_valid_secondary_runes:
-            predicted_decoded_df['SecondarySlot2'] = all_valid_secondary_runes[0]
+        if all_valid_secondary_2_runes:
+            predicted_decoded_df['SecondarySlot2'] = all_valid_secondary_2_runes[0]
 
     def handle_unknown_boots(boots):
         if boots == "Unknown Item":

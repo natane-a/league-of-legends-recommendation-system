@@ -31,7 +31,7 @@ The preprocessed data is saved in a suitable format for training the model, ensu
 - Using visualization techniques like correlation heatmaps and scatter plots, the dataset was analyzed to ensure meaningful patterns could be extracted.
 
 ### 4. Modeling
-The recommendation system uses a **RandomForest MultiOutputClassifier** to predict the optimal items and runes:
+The recommendation system uses a **XGBoost MultiOutputClassifier** to predict the optimal items and runes:
 - **Input Features**: Champion matchups, `kills`, `deaths`, `assists`, `goldEarned`, `win`, etc.
 - **Target Features**: `Boots_id`, `Legendary_1_id`, `Legendary_2_id`, and runes (`Keystone`, `PrimarySlot1`, etc.).
 
